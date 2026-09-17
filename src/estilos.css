@@ -1,0 +1,94 @@
+:root {
+  --azul: #161535;
+  --turquesa: #00FFCE;
+  --gris: #F6F6F6;
+  --linea: #DEDDE7;
+  --texto-suave: #6B6A85;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #fff;
+  color: var(--azul);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 14px 28px;
+  background: var(--azul);
+  color: #fff;
+}
+.nav .marca { font-weight: 700; letter-spacing: .04em; }
+.nav a { color: #C3C1DA; text-decoration: none; font-size: 14px; }
+.nav a.router-link-active { color: var(--turquesa); }
+
+main { padding: 28px; }
+
+.encabezado { display: flex; align-items: baseline; gap: 16px; }
+h1 { font-size: 24px; margin: 0 0 20px; }
+
+.vencidos {
+  font-size: 13px;
+  color: #B2540A;
+}
+
+.controles {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.controles input, .controles select {
+  padding: 9px 12px;
+  border: 1px solid var(--linea);
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+}
+.controles input { min-width: 340px; }
+.conteo { font-size: 13px; color: var(--texto-suave); }
+
+.tabla-scroll { overflow-x: auto; border: 1px solid var(--linea); border-radius: 8px; }
+
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td {
+  text-align: left;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--linea);
+  white-space: nowrap;
+}
+th {
+  background: var(--gris);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--texto-suave);
+}
+th.orden { cursor: pointer; user-select: none; }
+th.orden:hover { color: var(--azul); }
+tbody tr:hover { background: #FAFAFC; }
+
+.pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 20px;
+  background: var(--gris);
+  font-size: 12px;
+}
+
+.nota { color: var(--texto-suave); font-size: 14px; }
+
+.resumen ul { list-style: none; padding: 0; max-width: 360px; }
+.resumen li {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--linea);
+}
