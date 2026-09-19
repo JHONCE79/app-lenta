@@ -1,4 +1,4 @@
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import type { Embarque, EmbarqueVista } from '../tipos'
 
 const DIA = 86400000
@@ -9,13 +9,22 @@ export function useEmbarques() {
   const anchoVentana = ref(window.innerWidth)
   const vencidos = ref(0)
 
+  let intervaloEta: number | undefined
+  let manejarResize: (() => void) | undefined
+
+  function actualizarVencidos() {
+    let cuenta = 0
+    for (const e of embarques.value) {
+      if (e.diasParaEta !== null && e.diasParaEta < 0 && e.estado !== 'entregado') cuenta++
+    }
+    vencidos.value = cuenta
+  }
+
   onMounted(async () => {
     const respuesta = await fetch('/embarques.json')
     const datos: Embarque[] = await respuesta.json()
     const hoy = Date.now()
 
-    // La tabla necesita campos que el export no trae: días restantes,
-    // el estado en texto legible y el resumen de contenedores.
     embarques.value = datos.map(e => ({
       ...e,
       contenedores: [...e.contenedores],
@@ -24,23 +33,26 @@ export function useEmbarques() {
       resumenContenedores: e.contenedores.length ? e.contenedores.join(', ') : 'sin asignar'
     }))
     cargando.value = false
+    actualizarVencidos()
 
-    // La tabla ajusta el número de columnas visibles según el ancho.
-    window.addEventListener('resize', () => {
+    manejarResize = () => {
       anchoVentana.value = window.innerWidth
-      if (embarques.value.length > 0) {
-        anchoVentana.value = window.innerWidth
-      }
-    })
+    }
+    window.addEventListener('resize', manejarResize)
 
-    // Revisa periódicamente qué embarques ya pasaron su ETA.
-    setInterval(() => {
-      let cuenta = 0
-      for (const e of embarques.value) {
-        if (e.diasParaEta !== null && e.diasParaEta < 0 && e.estado !== 'entregado') cuenta++
-      }
-      vencidos.value = cuenta
+    intervaloEta = window.setInterval(() => {
+      actualizarVencidos()
     }, 3000)
+  })
+
+  onBeforeUnmount(() => {
+    if (intervaloEta !== undefined) {
+      window.clearInterval(intervaloEta)
+    }
+
+    if (manejarResize) {
+      window.removeEventListener('resize', manejarResize)
+    }
   })
 
   return { embarques, cargando, anchoVentana, vencidos }
