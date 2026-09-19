@@ -1,6 +1,10 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import type { Embarque, EmbarqueVista } from '../tipos'
 
+function normalizarTexto(texto: string) {
+  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
+}
+
 const DIA = 86400000
 
 export function useEmbarques() {
@@ -30,7 +34,8 @@ export function useEmbarques() {
       contenedores: [...e.contenedores],
       diasParaEta: e.eta ? Math.round((new Date(e.eta + 'T00:00:00').getTime() - hoy) / DIA) : null,
       estadoLegible: (e.estado || 'sin estado').replace(/_/g, ' '),
-      resumenContenedores: e.contenedores.length ? e.contenedores.join(', ') : 'sin asignar'
+      resumenContenedores: e.contenedores.length ? e.contenedores.join(', ') : 'sin asignar',
+      textoBusqueda: normalizarTexto(`${e.cliente} ${e.referencia} ${e.documento}`),
     }))
     cargando.value = false
     actualizarVencidos()

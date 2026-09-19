@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import { useEmbarques } from '../composables/useEmbarques'
+import { filtrarYOrdenarEmbarques } from '../lib/embarquesFiltrado'
 import type { EmbarqueVista } from '../tipos'
 
 const { embarques, cargando, vencidos } = useEmbarques()
@@ -18,35 +19,15 @@ const FILAS_EXTRA = 10
 
 const ESTADOS = ['pendiente', 'en_transito', 'en_puerto', 'nacionalizacion', 'entregado', 'cancelado']
 
-function normalizar(texto: string) {
-  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
-}
-
-const embarquesFiltrados = computed<EmbarqueVista[]>(() => {
-  let lista = embarques.value
-
-  if (busqueda.value) {
-    const q = normalizar(busqueda.value)
-    lista = lista.filter(e =>
-      normalizar(e.cliente).includes(q) ||
-      normalizar(e.referencia).includes(q) ||
-      normalizar(e.documento).includes(q)
-    )
-  }
-
-  if (estadoSeleccionado.value) {
-    lista = lista.filter(e => e.estado === estadoSeleccionado.value)
-  }
-
-  if (!ordenCampo.value) return lista
-
-  const campo = ordenCampo.value
-  return [...lista].sort((a, b) => {
-    const va = a[campo] || ''
-    const vb = b[campo] || ''
-    return ordenAsc.value ? va.localeCompare(vb) : vb.localeCompare(va)
-  })
-})
+const embarquesFiltrados = computed<EmbarqueVista[]>(() =>
+  filtrarYOrdenarEmbarques(
+    embarques.value,
+    busqueda.value,
+    estadoSeleccionado.value,
+    ordenCampo.value,
+    ordenAsc.value,
+  ),
+)
 
 const indiceInicial = computed(() => Math.max(0, Math.floor(scrollTop.value / ALTURA_FILA) - FILAS_EXTRA))
 const indiceFinal = computed(() => Math.min(
