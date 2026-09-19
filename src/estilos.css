@@ -54,7 +54,12 @@ h1 { font-size: 24px; margin: 0 0 20px; }
 .controles input { min-width: 340px; }
 .conteo { font-size: 13px; color: var(--texto-suave); }
 
-.tabla-scroll { overflow-x: auto; border: 1px solid var(--linea); border-radius: 8px; }
+.tabla-scroll {
+  max-height: 70vh;
+  overflow: auto;
+  border: 1px solid var(--linea);
+  border-radius: 8px;
+}
 
 table { border-collapse: collapse; width: 100%; font-size: 13px; }
 th, td {
@@ -74,6 +79,8 @@ th {
 th.orden { cursor: pointer; user-select: none; }
 th.orden:hover { color: var(--azul); }
 tbody tr:hover { background: #FAFAFC; }
+tr.espaciador:hover { background: transparent; }
+tr.espaciador td { padding: 0; border: 0; }
 
 .pill {
   display: inline-block;
