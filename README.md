@@ -1,39 +1,41 @@
 # Embarques · Kila
 
-Vista de embarques de la plataforma. Lista los embarques en tránsito, permite
-buscar por cliente o documento, filtrar por estado y ordenar por fecha.
+Una vista simple para revisar embarques en tránsito. Acá se listan los movimientos,
+se puede buscar por cliente o documento, filtrar por estado y ordenar por fecha sin
+perderse en una tabla enorme.
 
-## Correr el proyecto
+## Cómo correr el proyecto
 
 ```bash
 npm install
 npm run dev
 ```
 
-Abre http://localhost:5173
+Después, abrí esta URL en el navegador:
+
+http://localhost:5173
 
 ## Datos
 
-`public/embarques.json` — 50.000 embarques de ejemplo con la forma de un
-export de operación.
+El archivo `public/embarques.json` contiene 50.000 embarques de ejemplo, con un formato
+parecido al export de operación real.
 
 ## Estructura
 
 ```
-public/embarques.json          los datos
+public/embarques.json          datos de ejemplo
 src/
-  views/EmbarquesView.vue      la tabla
-  views/ResumenView.vue        conteo por estado
-  composables/useEmbarques.ts  carga de datos
-  tipos.ts                     el tipo Embarque
+  views/EmbarquesView.vue      tabla principal
+  views/ResumenView.vue        resumen por estado
+  composables/useEmbarques.ts  carga y manejo de datos
+  tipos.ts                     definición de Embarque
 ```
 
 ## Diagnóstico y mediciones
 
-Las mediciones de Performance se tomaron con el freno de CPU en 4x activo en
-DevTools. Cada escenario tiene tres grabaciones. Todas las medidas usan coma
-como separador decimal: `362,323 s` significa 362,323 segundos,
-aproximadamente 6,04 minutos.
+Las mediciones de Performance se tomaron con el freno de CPU en 4x activo en DevTools.
+Cada escenario se grabó tres veces. En todos los casos, los tiempos usan coma como
+separador decimal: `362,323 s` equivale a 362,323 segundos, o unos 6,04 minutos.
 
 ### Carga inicial de la tabla (50.000 embarques)
 
@@ -44,14 +46,14 @@ aproximadamente 6,04 minutos.
 | Prueba 3 | 254,199 s | 64,281 s | 32,823 s | 3,350 s | 355,809 s (5,93 min) |
 | **Promedio inicial** | **249,212 s** | **66,416 s** | **32,662 s** | — | **360,094 s (6,00 min)** |
 
-La línea base mostraba un costo dominante de *scripting*, seguido por el
-renderizado y el pintado masivo de la tabla. La carga bloqueaba la pantalla
-durante aproximadamente seis minutos.
+La línea base tenía un problema claro: el costo más grande venía de *scripting*,
+seguido por el render y el pintado masivo de la tabla. En la práctica, la pantalla
+quedaba bloqueada durante casi seis minutos al abrirse la vista.
 
 ### Carga después del cambio
 
-Después de extraer el filtrado, virtualizar las filas y preparar el índice de
-búsqueda, se obtuvieron estas mediciones sobre los mismos 50.000 embarques:
+Después de sacar el filtrado de la vista, virtualizar las filas y preparar un índice
+de búsqueda, volvimos a medir lo mismo con los mismos 50.000 embarques:
 
 | Medición | System | Scripting | Rendering | Painting | Loading | Total |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -60,11 +62,10 @@ búsqueda, se obtuvieron estas mediciones sobre los mismos 50.000 embarques:
 | Prueba 3 | 1,701 s | 1,340 s | 0,042 s | 0,020 s | 0,007 s | 3,299 s |
 | **Promedio posterior** | **1,709 s** | **1,360 s** | **0,041 s** | **0,019 s** | **0,008 s** | **3,481 s** |
 
-La carga posterior bajó de un promedio de **360,094 s (6,00 min)** a
-**3,481 s**, una reducción aproximada del **99,03 %**. El trabajo de
-*rendering* y *painting* también quedó reducido; el costo posterior está
-principalmente en la preparación de los datos y el trabajo del navegador durante
-la carga.
+La diferencia fue enorme: bajamos de un promedio de **360,094 s (6,00 min)** a
+**3,481 s**, una reducción aproximada del **99,03 %**. El trabajo de *rendering* y
+*painting* también cayó bastante, y el costo restante quedó más concentrado en preparar
+los datos y en la actividad del navegador durante la carga.
 
 ### Búsqueda y filtrado sobre la lista completa
 
@@ -75,17 +76,16 @@ la carga.
 | Prueba 3 | 225,489 s | 13,876 s | 1,998 s | 5,432 s | 246,795 s (4,11 min) |
 | **Promedio inicial** | **212,522 s** | **14,986 s** | **2,007 s** | — | **235,389 s (3,92 min)** |
 
-Durante la interacción el hilo principal permanecía ocupado cerca de 235 segundos
-en cada grabación de búsqueda, lo que explica que el teclado se atrasara y la
-interfaz quedara congelada.
+Mientras se escribía en el buscador, el hilo principal seguía ocupado cerca de 235
+segundos por grabación. Eso explicaba por qué el teclado se retrasaba y la interfaz
+se volvía casi imposible de usar.
 
-El cambio en `src/composables/useEmbarques.ts` prepara una sola vez el campo
-`textoBusqueda` con cliente, referencia y documento normalizados. Luego
-`src/lib/embarquesFiltrado.ts` compara el término contra ese campo, en lugar de
-normalizar tres textos para cada registro en cada tecla.
+La mejora estuvo en `src/composables/useEmbarques.ts`: se preparó una sola vez el campo
+`textoBusqueda` con cliente, referencia y documento normalizados. Después, en
+`src/lib/embarquesFiltrado.ts`, el filtro compara contra ese texto ya listo en lugar
+de normalizar tres cadenas para cada registro en cada tecla.
 
-Las tres grabaciones posteriores se realizaron buscando `munoz` con la misma
-configuración de Performance:
+Las tres grabaciones posteriores se hicieron buscando `munoz` con la misma configuración:
 
 | Medición | Scripting | System | Rendering | Painting | Total |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -94,12 +94,12 @@ configuración de Performance:
 | Prueba 3 | 1,910 s | 0,549 s | 0,055 s | 0,025 s | 3,919 s |
 | **Promedio posterior** | **1,981 s** | **0,637 s** | **0,073 s** | **0,052 s** | **4,169 s** |
 
-La respuesta real del buscador bajó de **235,389 s (3,92 min)** a
-**4,169 s**, una reducción aproximada del **98,23 %**. El scripting sigue
-siendo el mayor costo, pero ya no bloquea la interfaz durante minutos.
+La respuesta real del buscador bajó de **235,389 s (3,92 min)** a **4,169 s**, una
+reducción aproximada del **98,23 %**. El scripting sigue siendo el mayor costo, pero ya
+no bloquea la interfaz durante minutos.
 
-Además, un benchmark controlado sobre los 50.000 registros, con 20 búsquedas de
-`munoz`, dio estos resultados aislando la lógica de filtrado:
+Además, un benchmark controlado con los 50.000 registros y 20 búsquedas de `munoz`
+dio estos resultados aislando la lógica de filtrado:
 
 | Implementación | Promedio por búsqueda |
 | --- | ---: |
@@ -107,13 +107,12 @@ Además, un benchmark controlado sobre los 50.000 registros, con 20 búsquedas d
 | Texto normalizado precalculado | 5,79 ms |
 | **Reducción** | **96,08 %** |
 
-El benchmark de la función y la medición de Performance son complementarios: el
-primero demuestra el costo del algoritmo y la segunda demuestra el efecto en la
-interacción completa del navegador.
+El benchmark de la función y la medición de Performance se complementan: uno muestra
+el costo del algoritmo; el otro, el impacto real en la experiencia del usuario.
 
 ### Memoria: entrar y salir de Embarques
 
-Después de ejecutar Garbage Collection, los snapshots fueron:
+Después de ejecutar Garbage Collection, estos fueron los snapshots:
 
 | Momento | Memoria |
 | --- | ---: |
@@ -122,16 +121,15 @@ Después de ejecutar Garbage Collection, los snapshots fueron:
 | Segunda ronda | 51,4 MB |
 | Repetición posterior | 51,4 MB |
 
-La memoria aumentó durante la primera carga, pero permaneció estable en 51,4 MB
-después de otra ronda y otra ejecución de Garbage Collection. En los 40 ciclos
-observados no hubo crecimiento sostenido. El composable libera el `setInterval`
-y el listener de `resize` en `onBeforeUnmount`, evitando que la vista conserve
-esos recursos al desmontarse.
+La memoria subió durante la primera carga, pero luego quedó estable en 51,4 MB tras
+otra ronda y otra ejecución de Garbage Collection. En los 40 ciclos observados no hubo
+crecimiento sostenido. El composable libera el `setInterval` y el listener de `resize`
+en `onBeforeUnmount`, así la vista no se queda con esos recursos al desmontarse.
 
 ## Tests y compatibilidad
 
-La lógica de filtrado vive fuera de los componentes en
-`src/lib/embarquesFiltrado.ts` y tiene tests para:
+La lógica de filtrado quedó fuera de los componentes, en `src/lib/embarquesFiltrado.ts`,
+y cuenta con tests para:
 
 - búsqueda ignorando mayúsculas, minúsculas y tildes (`muñoz` / `munoz`);
 - ordenamiento por ETA conservando registros sin ETA.
@@ -145,15 +143,14 @@ npm run build
 
 ## Segunda pasada
 
-Repetiría la medición de carga con una recarga limpia y un protocolo idéntico
-para resolver la diferencia entre las líneas base registradas. Después evaluaría
-evitar la carga completa de datos cuando la pantalla se abre, cancelar el
-`fetch` al desmontar el composable y paginar o consultar los embarques desde el
-servidor. También agregaría una medición automatizada de interacción para evitar
-depender únicamente de lecturas manuales de DevTools.
+Repetiría la medición de carga con una recarga limpia y un protocolo idéntico para
+resolver la diferencia entre las líneas base registradas. Después evaluaría evitar la
+carga completa de datos cuando se abre la pantalla, cancelar el `fetch` al desmontar el
+composable y paginar o consultar los embarques desde el servidor. También agregaría una
+medición automatizada de interacción para no depender solo de lecturas manuales en DevTools.
 
 ## Uso de IA
 
-Se utilizó IA como apoyo para revisar el código, proponer hipótesis de rendimiento,
+Se utilizó IA como apoyo para revisar el código, plantear hipótesis de rendimiento,
 implementar cambios acotados y redactar parte de este informe. Las decisiones,
 mediciones y validaciones fueron revisadas sobre este repositorio.
